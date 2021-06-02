@@ -59,11 +59,20 @@ def match_position(line: str) -> Tuple[np.ndarray, np.ndarray]:
     c_array = np.array([float(match.group('Cx')), float(match.group('Cy')), float(match.group('Cz'))])
     return (p_array, c_array)
 
-def load_position_data(dir_path: str):
-    file_path = path.join(dir_path, '_transducer_positions.txt')
+def load_position_data(file_path: str) -> Tuple[np.ndarray, np.ndarray]:
     with open(file_path, 'r') as f:
         lines = f.readlines()
-        return [match_position(line) for line in lines]
+
+        num_lines = len(lines)
+        piezo_pos = np.empty([3, num_lines])
+        cmut_pos = np.empty([3, num_lines])
+
+        for i, line in enumerate(lines):
+            p_pos, c_pos = match_position(line)
+            piezo_pos[:, i] = p_pos
+            cmut_pos[:, i] = c_pos
+
+        return piezo_pos, cmut_pos
 
 
 if __name__ == '__main__':
