@@ -7,7 +7,7 @@ if TYPE_CHECKING:
     
 
 class EllipsoidRenderer:
-    def __init__(self, a: np.ndarray, b: np.ndarray, kernel: Kernel, h: float):
+    def __init__(self, a: np.ndarray, b: np.ndarray, kernel: Kernel, h: float = 0.001):
         self.a = np.array(a, dtype=float)
         self.b = np.array(b, dtype=float)
         self.kernel = kernel
@@ -16,7 +16,7 @@ class EllipsoidRenderer:
         self.d = np.linalg.norm(a-b)
         self.w = kernel.get_width()
 
-    def render(self, pos: np.ndarray, T: np.ndarray) -> np.ndarray:
+    def render(self, pos: np.ndarray, T: np.ndarray, normalize: bool=False) -> np.ndarray:
         """
         pos.shape: [3,X,Y,Z]
 
@@ -27,14 +27,17 @@ class EllipsoidRenderer:
         pos_shape = pos.shape[1:]
 
         t = self._t(pos.reshape([3,-1]), T) # Shape: [1, NUM_T, X*Y*Z]
-        c = self._c(T)[np.newaxis, :, np.newaxis]
-        f = self.kernel.get_val(t)/c
-    
+        f = self.kernel.get_val(t)
+
+        if normalize:
+            c = self._c(T)[np.newaxis, :, np.newaxis]
+            f /= c
+
         return f.reshape([len(T), *pos_shape])
 
     def _t(self, pos, T) -> np.ndarray:
         rep_pos = np.repeat(pos[:, np.newaxis, :], len(T), axis=1) # Shape: [3,NUM_T,X*Y*Z]
-        print(rep_pos.shape)
+        # print(rep_pos.shape)
         return np.linalg.norm(rep_pos - self.a[:, np.newaxis, np.newaxis], axis=0) + \
             np.linalg.norm(rep_pos - self.b[:, np.newaxis, np.newaxis], axis=0) - \
             T[np.newaxis, :,np.newaxis]

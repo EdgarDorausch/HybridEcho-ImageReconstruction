@@ -37,6 +37,24 @@ def create_cone(pos, dir1, dir2, name):
     anchor="tip",
     name=name)
 
+
+selected_p = np.apply_along_axis(
+    lambda pos: 
+        np.allclose(pos, np.array([385.0, -110.0, 198.0])),
+    0,
+    p_pos)
+
+selected_c = np.apply_along_axis(
+    lambda pos: any(
+        np.allclose(pos, np.array([1.0*k+311.1, -110.0, 198.0]))
+        for k in range(0,61,2)
+        ),
+    0,
+    c_pos)
+
+selected = np.logical_and(selected_p, selected_c)
+
+
 # Piezo data
 piezo_data = go.Scatter3d(
     x=p_pos[0,:],
@@ -44,8 +62,8 @@ piezo_data = go.Scatter3d(
     z=p_pos[2,:],
     mode='markers',
     marker=dict(
-        # size=12,
-        color='red',                # set color to an array/list of desired values
+        size=[12 if s else 8 for s in selected],
+        color=['red' if s else 'green' for s in selected],                # set color to an array/list of desired values
         # colorscale='Viridis',   # choose a colorscale
         opacity=0.8
     ),
@@ -59,16 +77,16 @@ cmut_data = go.Scatter3d(
     z=c_pos[2,:],
     mode='markers',
     marker=dict(
-        size=2,
-        color='blue',                # set color to an array/list of desired values
+        size=[12 if s else 8 for s in selected],
+        color=['red' if s else 'blue' for s in selected],                # set color to an array/list of desired values
         opacity=0.8
     ),
     name='cMut'
 )
 
-u = np.array([0,50,0], dtype=float)
+u = np.array([50,0,0], dtype=float)
 v = np.array([0,0,-50], dtype=float)
-o = np.array([350, -135, 50], dtype=float)
+o = np.array([350, -110, 25], dtype=float)
 image_plane = construct_plotly_image_plane(u,v,o)
 
 xL = []

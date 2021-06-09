@@ -48,7 +48,7 @@ class ImageGridBuilder:
         self.y = y[:,None, None].astype(float)
         self.origin = origin[:,None, None].astype(float)
 
-    def build(self, res_x, res_y):
+    def build(self, res_x: int, res_y: int) -> np.ndarray:
         """
         return - Shape: [3, res_x, res_y]
         """
