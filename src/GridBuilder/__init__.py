@@ -57,7 +57,7 @@ class ImageGridBuilder:
         ly = np.linspace(0.0, 1.0, num=res_y) 
 
         grid += lx[None, :, None] * self.x
-        grid += lx[None, None, :] * self.y
+        grid += ly[None, None, :] * self.y
 
         return grid
 
