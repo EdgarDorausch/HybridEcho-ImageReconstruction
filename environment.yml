@@ -10,3 +10,6 @@ dependencies:
   - scipy
   - tqdm
   - plotly
+  - pandas
+  - nbformat
+  - python-kaleido
