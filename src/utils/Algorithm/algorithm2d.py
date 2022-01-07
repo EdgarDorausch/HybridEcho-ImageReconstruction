@@ -1,7 +1,10 @@
+from matplotlib.pyplot import scatter
 import numpy as np
 import math
 from typing import *
+from plotly.missing_ipywidgets import FigureWidget
 from tqdm import tqdm
+import plotly.graph_objects as go
 
 
 class Scene2d():
@@ -42,10 +45,15 @@ class Scene2d():
     def num_rel(self):
         return self.pos_tx_rx.shape[0]
 
-    def get_separated_rx_tx_pos(self):
+    def get_separated_rx_tx_pos(self) -> Tuple[np.ndarray, np.ndarray]:
+        """Returns two arraws with every position used by a RX and a TX element
+
+        Returns:
+            Tuple[np.ndarray, np.ndarray]: The two arrays. First arary: shape=(num_tx,2). Second array: shape=(num_rx,2). unit=[mm]
+        """
         # with duplicates
-        pos_tx_wd = self.pos_tx_rx[0:2]
-        pos_rx_wd = self.pos_tx_rx[2:4]
+        pos_tx_wd = self.pos_tx_rx[:, 0:2]
+        pos_rx_wd = self.pos_tx_rx[:, 2:4]
 
         return np.unique(pos_tx_wd, axis=0), np.unique(pos_rx_wd, axis=0)
 
@@ -76,6 +84,54 @@ class Scene2d():
         max_dist = np.max(distances)
 
         return min_dist, max_dist
+
+    def get_plot_traces(self, with_grid: bool=True) -> List[Any]:
+
+        traces = []
+         
+        pos_tx, pos_rx = self.get_separated_rx_tx_pos()
+        traces.extend([
+            go.Scatter(x=pos_tx[:,0], y=pos_tx[:,1], mode='markers', name='TX'),
+            go.Scatter(x=pos_rx[:,0], y=pos_rx[:,1], mode='markers', name='RX'),
+        ])
+
+        # Image plane
+        im_plane = np.empty([5,2])
+        im_plane[0] = self.o
+        im_plane[1] = self.o+self.u
+        im_plane[2] = self.o+self.u+self.v
+        im_plane[3] = self.o+self.v
+        im_plane[4] = self.o
+        traces.append(go.Scatter(x=im_plane[:,0], y=im_plane[:,1], mode='lines', fill='toself', name='image plane'),)
+        
+        
+        if with_grid:
+            # Image Grid Lines
+            edge_x = []
+            edge_y = []
+            for u_scale in np.linspace(0,1,num=self.res_u):
+                x0, y0 = self.o + u_scale*self.u 
+                x1, y1 = self.o + u_scale*self.u +self.v
+                edge_x.append(x0)
+                edge_x.append(x1)
+                edge_x.append(None)
+                edge_y.append(y0)
+                edge_y.append(y1)
+                edge_y.append(None)
+            for v_scale in np.linspace(0,1,num=self.res_v):
+                x0, y0 = self.o + v_scale*self.v 
+                x1, y1 = self.o + v_scale*self.v +self.u
+                edge_x.append(x0)
+                edge_x.append(x1)
+                edge_x.append(None)
+                edge_y.append(y0)
+                edge_y.append(y1)
+                edge_y.append(None)
+
+            traces.append(go.Scatter(x=edge_x, y=edge_y, name='image grid', mode='lines', line=dict(width=0.5, color='#888'), hoverinfo='none'))
+
+
+        return traces
 
 
 class DAS2d():

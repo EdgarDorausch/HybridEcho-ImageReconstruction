@@ -3,7 +3,7 @@ from typing import *
 if TYPE_CHECKING:
     pass
 import numpy as np
-
+import plotly.graph_objects as go
 
 class ScatterConfiguration:
 
@@ -26,3 +26,9 @@ class ScatterConfiguration:
 
     def __array__(self):
         return np.array(self.pos_scatter)
+
+    def get_plot_traces(self) -> Any:
+        pos_sc = np.array(self)
+        return go.Scatter(
+            x=pos_sc[:,0], y=pos_sc[:,1], mode='markers', name='scatter'
+        )

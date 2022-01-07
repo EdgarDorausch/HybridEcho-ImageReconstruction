@@ -51,6 +51,12 @@ scene = Scene2d(
     pos_tx_rx=pos_rx_tx
 )
 
+#%%
+trs = scene.get_plot_traces() + [sc.get_plot_traces()]
+fig = go.Figure(data=trs)
+fig.update_yaxes(scaleratio=1, scaleanchor='x')
+fig.show()
+
 # %%
 alg = DAS2d(scene=scene, sig=t, f_samp=f_samp, c=c)
 # %%
