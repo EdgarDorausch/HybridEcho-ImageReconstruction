@@ -1,3 +1,4 @@
+from abc import ABC, abstractmethod
 from matplotlib.pyplot import scatter
 import numpy as np
 import math
@@ -129,15 +130,26 @@ class Scene2d():
                 edge_y.append(None)
 
             traces.append(go.Scatter(x=edge_x, y=edge_y, name='image grid', mode='lines', line=dict(width=0.5, color='#888'), hoverinfo='none'))
-
-
         return traces
 
+    def get_image_xy_space(self, x: np.ndarray = np.array([1.,0.]), y: np.ndarray = np.array([0., 1.])) -> Tuple[np.ndarray, np.ndarray]:
+        # u space
+        u_scale = np.linspace(0., 1.0, num=self.res_u)
+        u_seq = self.o[None,:] + u_scale[:,None]*self.u[None,:]
+        x_space = u_seq @ x
 
-class DAS2d():
+        # v space
+        v_scale = np.linspace(0., 1.0, num=self.res_v)
+        v_seq = self.o[None,:] + v_scale[:,None]*self.v[None,:]
+        y_space = v_seq @ y
 
+        return x_space, y_space
+
+
+
+class Algorithm2d(ABC):
     def __init__(self, scene: Scene2d, sig: np.ndarray, f_samp: float,  c: float):
-        """Generate Delay-And-Sum image
+        """Handles the image reconstruction
 
         Args:
             scene (Scene2d): scene object
@@ -147,6 +159,7 @@ class DAS2d():
         """
         self.scene = scene
         self.sig = sig
+        """signal. shape=(num_rel, sig_len)"""
         assert sig.ndim == 2
         assert sig.shape[0] == scene.num_rel
 
@@ -169,6 +182,10 @@ class DAS2d():
     def dt(self) -> float:
         return 1/self.f_samp
 
+    @property
+    def num_rel(self) -> int:
+        return self.scene.num_rel
+
     def get_time_space(self):
         """Physical time value for each signal sample.
 
@@ -188,6 +205,13 @@ class DAS2d():
         upper_sample_idx = math.ceil(max_t * self.f_samp)+1 # not inclusive
 
         return lower_sample_idx, upper_sample_idx
+
+    @abstractmethod
+    def run(self) -> np.ndarray:
+        raise NotImplementedError()
+
+
+class Ellipse2d(Algorithm2d):
 
     def run(self) -> np.ndarray:
         min_sample_idx, max_sample_idx = self.get_imaging_sample_interval()
@@ -221,4 +245,27 @@ class DAS2d():
                 ri += rii
         
         return ri
+
+
+class DAS2d(Algorithm2d):
+
+    def run(self) -> np.ndarray:
+        min_sample_idx, max_sample_idx = self.get_imaging_sample_interval()
+
+        grid = self.scene.construct_image_grid()
+        im = np.zeros([self.res_u*self.res_v])
+
+        def image_tx_rx(tx_pos, rx_pos, rel):
+            
+            # Distance fields
+            D_rx = np.linalg.norm(grid - rx_pos, axis= 2)
+            D_tx = np.linalg.norm(grid - tx_pos, axis= 2)
+            d_total = np.ravel(D_rx+D_tx)
+
+            return np.interp(d_total/self.c, self.get_time_space(), self.sig[0])*d_total
+
+        for i in tqdm(range(self.scene.num_rel)):
+            im += image_tx_rx(self.scene.pos_tx_rx[None,None,i, 0:2], self.scene.pos_tx_rx[None,None,i, 2:4], i)
+        
+        return im.reshape([self.res_u,self.res_v])
 
