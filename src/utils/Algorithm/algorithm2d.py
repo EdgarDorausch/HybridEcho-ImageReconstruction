@@ -262,7 +262,7 @@ class DAS2d(Algorithm2d):
             D_tx = np.linalg.norm(grid - tx_pos, axis= 2)
             d_total = np.ravel(D_rx+D_tx)
 
-            return np.interp(d_total/self.c, self.get_time_space(), self.sig[0])*d_total
+            return np.interp(d_total/self.c, self.get_time_space(), self.sig[rel])*d_total
 
         for i in tqdm(range(self.scene.num_rel)):
             im += image_tx_rx(self.scene.pos_tx_rx[None,None,i, 0:2], self.scene.pos_tx_rx[None,None,i, 2:4], i)

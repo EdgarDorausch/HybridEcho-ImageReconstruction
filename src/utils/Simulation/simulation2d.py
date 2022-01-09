@@ -40,7 +40,7 @@ class Simulation2D(ABC):
         """Runs simulation
 
         Args:
-            pos_tx_rx (np.ndarray): defining the positions of the TX and RX elements. shape=(NUM_REL, 4) & unit=[mm]
+            pos_tx_rx (np.ndarray): defining the positions of the TX and RX elements. Each row has the form: (tx_x, tx_z, rx_x, rx_z). shape=(NUM_REL, 4) & unit=[mm]
             pos_scatter (np.ndarray): defining the positions of the scatters. shape=(NUM_SCATTER, 2) & unit=[mm]
 
         Returns:
