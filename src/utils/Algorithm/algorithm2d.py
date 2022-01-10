@@ -87,6 +87,15 @@ class Scene2d():
         return min_dist, max_dist
 
     def get_plot_traces(self, with_grid: bool=True) -> List[Any]:
+        """Returns a list of plotly traces:
+        [<TxPositions>, <RxPositions>, <ImagePlane>, <ImageGrid?>]
+
+        Args:
+            with_grid (bool, optional): wether to add traces or not. Defaults to True.
+
+        Returns:
+            List[Any]: List of traces.
+        """
 
         traces = []
          
@@ -131,6 +140,37 @@ class Scene2d():
 
             traces.append(go.Scatter(x=edge_x, y=edge_y, name='image grid', mode='lines', line=dict(width=0.5, color='#888'), hoverinfo='none'))
         return traces
+
+    def get_image_plane_annotations(self):
+        u = self.u
+        v = self.v
+        o = self.o
+
+        arrow_u = go.layout.Annotation(dict(
+            x=u[0]+o[0],
+            y=u[1]+o[1],
+            xref="x", yref="y",
+            # text="u",
+            showarrow=True,
+            axref = "x", ayref='y',
+            ax=o[0],
+            ay=o[1],
+            arrowhead = 3,
+            arrowwidth=1.5
+        ))
+        arrow_v = go.layout.Annotation(dict(
+            x=v[0]+o[0],
+            y=v[1]+o[1],
+            xref="x", yref="y",
+            # text="v",
+            showarrow=True,
+            axref = "x", ayref='y',
+            ax=o[0],
+            ay=o[1],
+            arrowhead = 3,
+            arrowwidth=1.5
+        ))
+        return [arrow_u, arrow_v]
 
     def get_image_xy_space(self, x: np.ndarray = np.array([1.,0.]), y: np.ndarray = np.array([0., 1.])) -> Tuple[np.ndarray, np.ndarray]:
         # u space
@@ -258,11 +298,11 @@ class DAS2d(Algorithm2d):
         def image_tx_rx(tx_pos, rx_pos, rel):
             
             # Distance fields
-            D_rx = np.linalg.norm(grid - rx_pos, axis= 2)
-            D_tx = np.linalg.norm(grid - tx_pos, axis= 2)
-            d_total = np.ravel(D_rx+D_tx)
+            d_rx = np.ravel(np.linalg.norm(grid - rx_pos, axis= 2))
+            d_tx = np.ravel(np.linalg.norm(grid - tx_pos, axis= 2))
+            d_total = d_rx+d_tx
 
-            return np.interp(d_total/self.c, self.get_time_space(), self.sig[rel])*d_total
+            return np.interp(d_total/self.c, self.get_time_space(), self.sig[rel])*d_rx*d_tx
 
         for i in tqdm(range(self.scene.num_rel)):
             im += image_tx_rx(self.scene.pos_tx_rx[None,None,i, 0:2], self.scene.pos_tx_rx[None,None,i, 2:4], i)

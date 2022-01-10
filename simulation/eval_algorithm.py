@@ -9,9 +9,11 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
-f_samp=4e6
+# Physical Properties
+f_samp=2e6
 c=1_484_000.0
 
+# Image Plane
 o, u, v = np.array([
     [0.0,  0.0],
     [40.0, 0.0],
@@ -21,10 +23,10 @@ o, u, v = np.array([
 # ------------------------- Generate Simulation Data ------------------------- #
 
 ac = ArrayConfiguration([
-    s*u for s in np.linspace(0.0, 1.0, num=50)
+    s*u for s in np.linspace(0.0, 1.0, num=10)
 ],
 [
-    s*u for s in np.linspace(0.0, 1.0, num=50)
+    s*u for s in np.linspace(0.0, 1.0, num=10)
 ])
 
 sc = ScatterConfiguration()
@@ -36,39 +38,9 @@ pos_scatter = np.array(sc)
 sim = LinISimulation(
     f_samp=f_samp,
     c=c,
-    t1=2e-4
+    t1=20e-4
 )
 t = sim.simulate(pos_tx_rx, pos_scatter)
-
-
-
-
-fig = make_subplots(rows=1, cols=3,
-    specs=[[{"type": "xy"}, {"type": "xy"}, {"type": "scene"}]])
-
-# fig1 = go.Figure(data=go.Scatter(x=sim.time_space, y=t[0]))
-# fig1.update_xaxes(title_text='travel time [s]')
-
-fig.add_trace(go.Scatter(x=sim.time_space, y=t[0], name='timeline0'), row=1, col=1)
-fig.add_trace(go.Scatter(x=pos_scatter[:,0], y=pos_scatter[:,1], mode='markers', name='scatters'), row=1, col=2)
-fig.add_trace(go.Scatter(x=pos_tx_rx[:,0], y=pos_tx_rx[:,1], mode='markers', name='tx'), row=1, col=2)
-fig.add_trace(go.Scatter(x=pos_tx_rx[:,2], y=pos_tx_rx[:,3], mode='markers', name='rx'), row=1, col=2)
-
-const = np.full(t.shape[1:2], 0.0)
-for i in range(t.shape[0]):
-    fig.add_trace(go.Scatter3d(y=sim.time_space, z=t[i], x=const+i, mode='lines'), row=1, col=3)
-
-fig.update_xaxes(
-    scaleanchor = "y2",
-    scaleratio = 1,
-    row=1, col=2)
-
-fig.update_scenes(
-    camera_projection_type='orthographic',
-    row=1, col=3
-)
-
-fig.show()
 
 
 # ----------------------------- Run DAS Algorithm ---------------------------- #
@@ -91,19 +63,17 @@ trs = scene.get_plot_traces() + [sc.get_plot_traces()]
 fig = go.Figure(data=trs)
 fig.update_yaxes(scaleratio=1, scaleanchor='x')
 
-arrow = go.layout.Annotation(dict(
-                x=u[0]+o[0],
-                y=u[1]+o[1],
-                xref="x", yref="y",
-                text="u",
-                showarrow=True,
-                axref = "x", ayref='y',
-                ax=o[0],
-                ay=o[1],
-                arrowhead = 3,
-                arrowwidth=1.5))
 fig.update_layout(
-    annotations=[arrow]
+    title="Generated Image",
+    xaxis_title="X Axis [mm]",
+    yaxis_title="Z Axis [mm]",
+    legend_title="Legend",
+    font=dict(
+        family="Courier New, monospace",
+        size=18,
+        color="RebeccaPurple"
+    ),
+    annotations=scene.get_image_plane_annotations()
 )
 
 fig.show()
@@ -130,11 +100,23 @@ fig = px.imshow(
     color_continuous_scale='gray')
 
 
-fig.add_trace(sc.get_plot_traces())
+# fig.add_trace(sc.get_plot_traces())
 
-fig.add_trace(go.Scatter(x=pos_tx_rx[:,0], y=pos_tx_rx[:,1], mode='markers'))
-fig.add_trace(go.Scatter(x=pos_tx_rx[:,2], y=pos_tx_rx[:,3], mode='markers'))
+fig.add_traces(scene.get_plot_traces()[:2])
 fig.update_yaxes(autorange=True)
+fig.update_layout(
+    coloraxis_colorbar_x=-0.15,
+    title="Generated Image",
+    xaxis_title="X Axis [mm]",
+    yaxis_title="Z Axis [mm]",
+    legend_title="Legend",
+    font=dict(
+        family="Courier New, monospace",
+        size=18,
+        color="RebeccaPurple"
+    )
+)
+
 fig.show()
 
 # %%
