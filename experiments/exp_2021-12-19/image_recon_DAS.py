@@ -35,7 +35,9 @@ sig_rx_raw = np.empty([len_sig_raw, NUM_SIGNALS])
 
 print('Load RX Data:')
 for i in tqdm(range(NUM_SIGNALS)):
-    sig_rx_raw[:, i] = np.fromfile(f'data/ch_000/rx_signal_ch_000_{i+1:05}.float32', dtype='>f4')
+    sig_rx_raw[:, i] = np.fromfile(os.path.join(
+    os.path.dirname(__file__),
+        f'data/ch_000/rx_signal_ch_000_{i+1:05}.float32'), dtype='>f4')
 
 
 #%%--------------------------------------------------------------------------- #
@@ -105,7 +107,8 @@ def construct_selected(offsets: List[int]) -> np.ndarray:
 
 selected = construct_selected([50, 0, 50, 4, 50, 3, 50, 4, 100, 1])
 
-pos_raw = np.genfromtxt('data/positions.csv', delimiter=',', dtype=np.float64)
+pos_raw = np.genfromtxt(os.path.join(
+    os.path.dirname(__file__),'data/positions.csv'), delimiter=',', dtype=np.float64)
 
 sig_rx_sel_cir = sig_rx_cir[:,selected]
 pos_raw_sel = pos_raw[selected]
@@ -121,10 +124,10 @@ pos[:, 4:6] += diff[None,:]
 #%%--------------------------------------------------------------------------- #
 # ----------------------------- Image Properties ----------------------------- #
 # Define image plane
-u, v, o = np.array([[0., 100., 0.], [0., 0., -360.], [256, -254, 100.]])
+u, v, o = np.array([[0., 100., 0.], [0., 0., -180.], [256, -254, 100.]])
 
 # Define image plane resolution
-res_u, res_v = 3*100, 3*360
+res_u, res_v = 3*100, 3*180
 
 
 #%%--------------------------------------------------------------------------- #

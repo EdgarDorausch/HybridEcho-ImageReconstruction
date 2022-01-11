@@ -1,4 +1,6 @@
-#%%
+#%%--------------------------------------------------------------------------- #
+# ------------------------------- Load Modules ------------------------------- #
+
 from utils.Simulation.simulation2d import LinISimulation
 from utils.ArrayConfiguration import ArrayConfiguration
 from utils.ScatterConfiguration import ScatterConfiguration
@@ -43,9 +45,8 @@ sim = LinISimulation(
 t = sim.simulate(pos_tx_rx, pos_scatter)
 
 
+#%%--------------------------------------------------------------------------- #
 # ----------------------------- Run DAS Algorithm ---------------------------- #
-
-#%%
 
 
 
@@ -53,8 +54,8 @@ scene = Scene2d(
     o=o,
     u=u,
     v=v,
-    res_u=350,
-    res_v=350,
+    res_u=850,
+    res_v=850,
     pos_tx_rx=pos_tx_rx
 )
 
