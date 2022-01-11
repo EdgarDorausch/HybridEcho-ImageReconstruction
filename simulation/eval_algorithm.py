@@ -11,8 +11,12 @@ import plotly.graph_objects as go
 import plotly.express as px
 from plotly.subplots import make_subplots
 
+
+#%%--------------------------------------------------------------------------- #
+# ----------------------------- Define Properties ---------------------------- #
+
 # Physical Properties
-f_samp=2e6
+f_samp=3e6
 c=1_484_000.0
 
 # Image Plane
@@ -22,13 +26,16 @@ o, u, v = np.array([
     [0.0, 40.0]
 ])
 
+res_u, res_v = 350, 350
+
+#%%--------------------------------------------------------------------------- #
 # ------------------------- Generate Simulation Data ------------------------- #
 
 ac = ArrayConfiguration([
-    s*u for s in np.linspace(0.0, 1.0, num=10)
+    s*u-v for s in np.linspace(0.0, 1.0, num=10)
 ],
 [
-    s*u for s in np.linspace(0.0, 1.0, num=10)
+    s*u-v for s in np.linspace(0.0, 1.0, num=10)
 ])
 
 sc = ScatterConfiguration()
@@ -40,26 +47,24 @@ pos_scatter = np.array(sc)
 sim = LinISimulation(
     f_samp=f_samp,
     c=c,
-    t1=20e-4
+    t1=20e-4,
+    mirror_planes=np.array([[0.05,1.,35.], [0.05,1.,35.5], [0.05,1.,36.]])
 )
 t = sim.simulate(pos_tx_rx, pos_scatter)
 
 
 #%%--------------------------------------------------------------------------- #
-# ----------------------------- Run DAS Algorithm ---------------------------- #
-
-
+# -------------------------------- Plot Scene -------------------------------- #
 
 scene = Scene2d(
     o=o,
     u=u,
     v=v,
-    res_u=850,
-    res_v=850,
+    res_u=res_u,
+    res_v=res_v,
     pos_tx_rx=pos_tx_rx
 )
 
-#%%
 trs = scene.get_plot_traces() + [sc.get_plot_traces()]
 fig = go.Figure(data=trs)
 fig.update_yaxes(scaleratio=1, scaleanchor='x')
@@ -77,19 +82,31 @@ fig.update_layout(
     annotations=scene.get_image_plane_annotations()
 )
 
+# Generate Plane Traces
+full_fig = fig.full_figure_for_development()
+plane_x = np.array(full_fig.layout.xaxis.range)
+
+plane_tr = [
+    go.Scatter(
+        x=plane_x,
+        y=sim.get_mirror_plane_y(plane_x)[i],
+        mode='lines',
+        name=f'plane-{i}'
+    ) for i in range(sim.num_planes)
+]
+fig.add_traces(plane_tr)
+
 fig.show()
 
-# %%
+#%%--------------------------------------------------------------------------- #
+# ----------------------------- Run DAS Algorithm ---------------------------- #
+
 alg = DAS2d(scene=scene, sig=t, f_samp=f_samp, c=c)
-# %%
+im = alg.run(with_fspl=False)
 
-im = alg.run()
 
-# import matplotlib.pyplot as plt
-# plt.imshow(im)
-# %%
-grid = scene.construct_image_grid()
-# %%
+#%%--------------------------------------------------------------------------- #
+# -------------------------------- Plot Image -------------------------------- #
 
 x_space, y_space = scene.get_image_xy_space()
 
@@ -99,7 +116,6 @@ fig = px.imshow(
     y=y_space,
     aspect=None,
     color_continuous_scale='gray')
-
 
 # fig.add_trace(sc.get_plot_traces())
 
@@ -119,5 +135,17 @@ fig.update_layout(
 )
 
 fig.show()
+
+
+
+fig = px.imshow(
+    im.T,
+    x=x_space,
+    y=y_space,
+    aspect=None
+)
+fig.update_yaxes(autorange=True)
+fig.show()
+
 
 # %%

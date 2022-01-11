@@ -247,7 +247,15 @@ class Algorithm2d(ABC):
         return lower_sample_idx, upper_sample_idx
 
     @abstractmethod
-    def run(self) -> np.ndarray:
+    def run(self, with_fspl: bool=False) -> np.ndarray:
+        """Runs the image roconstruction algorithm
+
+        Args:
+            with_fspl (bool, optional): Wether the algorithm should use free-space path loss. Defaults to False.
+
+        Returns:
+            np.ndarray: The reconstructed image. shape=(res_u, res_v).
+        """
         raise NotImplementedError()
 
 
@@ -289,7 +297,7 @@ class Ellipse2d(Algorithm2d):
 
 class DAS2d(Algorithm2d):
 
-    def run(self) -> np.ndarray:
+    def run(self, with_fspl: bool =True) -> np.ndarray:
         min_sample_idx, max_sample_idx = self.get_imaging_sample_interval()
 
         grid = self.scene.construct_image_grid()
@@ -302,7 +310,10 @@ class DAS2d(Algorithm2d):
             d_tx = np.ravel(np.linalg.norm(grid - tx_pos, axis= 2))
             d_total = d_rx+d_tx
 
-            return np.interp(d_total/self.c, self.get_time_space(), self.sig[rel])*d_rx*d_tx
+            iim = np.interp(d_total/self.c, self.get_time_space(), self.sig[rel])
+            if with_fspl:
+                iim *= d_rx*d_tx
+            return iim
 
         for i in tqdm(range(self.scene.num_rel)):
             im += image_tx_rx(self.scene.pos_tx_rx[None,None,i, 0:2], self.scene.pos_tx_rx[None,None,i, 2:4], i)
