@@ -1,0 +1,16 @@
+name: HybridEcho
+channels:
+  - defaults
+  - conda-forge
+dependencies:
+  - numba
+  - numpy
+  - matplotlib
+  - python=3.8
+  - ipykernel=6
+  - scipy
+  - tqdm
+  - plotly
+  - pandas
+  - nbformat
+  - python-kaleido

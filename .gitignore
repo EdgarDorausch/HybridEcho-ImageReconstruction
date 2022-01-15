@@ -1,5 +1,6 @@
-/data/*
-/plots
+**/data/*
+**/plots/*
+*.html
 
 # Byte-compiled / optimized / DLL files
 __pycache__/
